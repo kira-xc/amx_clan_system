@@ -16,31 +16,10 @@
 #define CTS_CLAN_PREFIX "^1[^4Clan System^1]"
 
 new JSON:____cts_clans 
-
 new Handle:____cts_g_SqlTuple
 
-
-
-new ____cts_db_users[33],____cts_db_member_in_clan_of[33],____cts_db_is_leader_of[33];
-new ____cts_db_names[33][32],____cts_db_steams[33][32];
-
-
-
-stock clan_cts_clean_names(name[],len){
-    replace_all(name,len,"(1)","")
-    replace_all(name,len,"(2)","")
-    replace_all(name,len,"(3)","")
-    replace_all(name,len,"(4)","")
-    replace_all(name,len,"(5)","")
-    replace_all(name,len,"(6)","")
-    replace_all(name,len,"(7)","")
-    replace_all(name,len,"(8)","")
-    replace_all(name,len,"(9)","")
-    replace_all(name,len,"(10)","")
-    replace_all(name,len,"(","")
-    replace_all(name,len,")","")
-    replace_all(name,len," ","_")
-}
+static ____cts_db_users[33],____cts_db_member_in_clan_of[33],____cts_db_is_leader_of[33];
+static ____cts_db_names[33][32],____cts_db_steams[33][32];
 
 /**
  * Initializes the connection to the clan database.
@@ -97,134 +76,9 @@ stock clan_cts_load_player_data(id)
     Data[0] = id
     
     //we will now select from the table `tutorial` where the steamid match
-    format(szTemp,charsmax(szTemp),"SELECT u.user_id, u.user_name, u.steam_id, cm.clan_id AS member_clan_id, c.id AS leader_clan_id FROM users u LEFT JOIN clan_members cm ON u.user_id = cm.user_id LEFT JOIN clans c ON u.user_id = c.leader_id WHERE u.user_name = '%s' AND u.steam_id = '%s';", szSteamId,szNamess)
+    format(szTemp,charsmax(szTemp),"SELECT u.user_id, u.user_name, u.steam_id, cm.clan_id AS member_clan_id, c.id AS leader_clan_id FROM users u LEFT JOIN clan_members cm ON u.user_id = cm.user_id LEFT JOIN clans c ON u.user_id = c.leader_id WHERE u.user_name = '%s' AND u.steam_id = '%s';", szNamess,szSteamId)
     SQL_ThreadQuery(____cts_g_SqlTuple,"______clan_cts_register_client",szTemp,Data,1)
 }
-
-public ______clan_cts_register_client(FailState,Handle:Query,Error[],Errcode,Data[],DataSize)
-{
-    if(FailState != TQUERY_SUCCESS)
-    {
-        SQL_FreeHandle(Query)
-        return ;
-    }
-
-    new id
-    id = Data[0]
-    
-    if(SQL_NumResults(Query) < 1) 
-    {
-        //.if there are no results found
-        
-        new szSteamId[32],szNamess[32]
-        get_user_authid(id, szSteamId, charsmax(szSteamId)) // get user's steamid
-        get_user_name(id, szNamess, charsmax(szNamess))
-        clan_cts_clean_names(szNamess,charsmax(szNamess))
-        //  if its still pending we can't do anything with it
-        if (equal(szSteamId,"ID_PENDING")){
-            SQL_FreeHandle(Query)
-            return ;
-        }
-            
-        new szTemp[512]
-        
-        // now we will insturt the values into our table.
-        format(szTemp,charsmax(szTemp),"INSERT INTO users ( steam_id , user_name)VALUES ('%s','%s');",szSteamId,szNamess)
-        SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle",szTemp)
-        __clan_cts_load_player_data2(id)
-    } 
-    else 
-    {
-        // if there are results found
-        ____cts_db_users[id]  = SQL_ReadResult(Query, 0)
-        SQL_ReadResult(Query, 1,____cts_db_names[id],31)
-        SQL_ReadResult(Query, 2,____cts_db_steams[id],31)
-        if(SQL_IsNull(Query,3)){
-            ____cts_db_member_in_clan_of[id]=0
-        }
-        else{
-            ____cts_db_member_in_clan_of[id]=SQL_ReadResult(Query, 3)
-        }
-        if(SQL_IsNull(Query,4)){
-            ____cts_db_is_leader_of[id]=0
-        }
-        else{
-            ____cts_db_is_leader_of[id]=SQL_ReadResult(Query, 4)
-        }
-    }
-    SQL_FreeHandle(Query)
-    return ;
-}
-
-public __clan_cts_load_player_data2(id)
-{
-    new szSteamId[32],szNamess[32], szTemp[512]
-    get_user_authid(id, szSteamId, charsmax(szSteamId))
-    get_user_name(id, szNamess, charsmax(szNamess))
-
-    clan_cts_clean_names(szNamess,charsmax(szNamess))
-    new Data[1]
-    Data[0] = id
-    
-    //we will now select from the table `tutorial` where the steamid match
-    format(szTemp,charsmax(szTemp),"SELECT u.user_id, u.user_name, u.steam_id, cm.clan_id AS member_clan_id, c.id AS leader_clan_id FROM users u LEFT JOIN clan_members cm ON u.user_id = cm.user_id LEFT JOIN clans c ON u.user_id = c.leader_id WHERE u.user_name = '%s' AND u.steam_id = '%s';", szSteamId,szNamess)
-    SQL_ThreadQuery(____cts_g_SqlTuple,"______clan_cts_register_client2",szTemp,Data,1)
-}
-
-public ______clan_cts_register_client2(FailState,Handle:Query,Error[],Errcode,Data[],DataSize)
-{
-    if(FailState != TQUERY_SUCCESS)
-    {
-        SQL_FreeHandle(Query)
-        return ;
-    }
-
-    new id
-    id = Data[0]
-    
-    if(SQL_NumResults(Query) < 1) 
-    {
-        //.if there are no results found
-        
-        new szSteamId[32],szNamess[32]
-        get_user_authid(id, szSteamId, charsmax(szSteamId)) // get user's steamid
-        get_user_name(id, szNamess, charsmax(szNamess))
-        clan_cts_clean_names(szNamess,charsmax(szNamess))
-        //  if its still pending we can't do anything with it
-        if (equal(szSteamId,"ID_PENDING")){
-            SQL_FreeHandle(Query)
-            return ;
-        }
-            
-        new szTemp[512]
-        
-        // now we will insturt the values into our table.
-        format(szTemp,charsmax(szTemp),"INSERT INTO users ( steam_id , user_name)VALUES ('%s','%s');",szSteamId,szNamess)
-        SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle",szTemp)
-    } 
-    else 
-    {
-        // if there are results found
-        ____cts_db_users[id]  = SQL_ReadResult(Query, 0)
-        SQL_ReadResult(Query, 1,____cts_db_names[id],31)
-        SQL_ReadResult(Query, 2,____cts_db_steams[id],31)
-        if(SQL_IsNull(Query,3)){
-            ____cts_db_member_in_clan_of[id]=0
-        }
-        else{
-            ____cts_db_member_in_clan_of[id]=SQL_ReadResult(Query, 3)
-        }
-        if(SQL_IsNull(Query,4)){
-            ____cts_db_is_leader_of[id]=0
-        }
-        else{
-            ____cts_db_is_leader_of[id]=SQL_ReadResult(Query, 4)
-        }
-    }
-    SQL_FreeHandle(Query)
-    return ;
-}
-
 
 /**
  * Creates a new clan with the specified leader, prefix, name, and members.
@@ -234,8 +88,11 @@ public ______clan_cts_register_client2(FailState,Handle:Query,Error[],Errcode,Da
  * @param clan_name[]  The full name of the clan.
  * @param memebers[]   An array of user IDs to add as initial members.
  * @param max_member   The maximum number of members allowed in the clan.
+ * @param callbackFunc[] Callback function to be called after create clan.
+ *
+ * @note callback will return callbackFunc(id)
  */
-stock clan_cts_create_clan(id,prefix[],clan_name[],memebers[32],max_member=0)
+stock clan_cts_create_clan(id,prefix[],clan_name[],memebers[32],max_member=0,callbackFunc[])
 {
     new leader_id=____cts_db_users[id]
     new member_of_clan=____cts_db_member_in_clan_of[id]
@@ -243,8 +100,9 @@ stock clan_cts_create_clan(id,prefix[],clan_name[],memebers[32],max_member=0)
         return ;
     }
 
-    new Data[1]
-    Data[0] = id
+    new Data[2]
+    Data[0] = get_func_id(callbackFunc);
+    Data[1] = id
     new count=0,szTemp[512]
     for(new i=0;i<max_member;i++)
     {
@@ -259,76 +117,13 @@ stock clan_cts_create_clan(id,prefix[],clan_name[],memebers[32],max_member=0)
 
     // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"INSERT INTO clans (name, clan_prefix,  leader_id) VALUES ( '%s', '%s', %d);",clan_name, prefix,leader_id)
-    SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
+    SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_create_clan_callback",szTemp,Data,2)
 
     format(szTemp,charsmax(szTemp),"SELECT id,clan_prefix,clan_logo_motd,upgrade_level,DATEDIFF(last_payment+INTERVAL 14 DAY,now() ) AS daysleft,name,leader_id FROM clans where name = '%s';",clan_name)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_register_members",szTemp,memebers,32)
 
 }
 
-public _____clan_cts_register_members(FailState,Handle:Query,Error[],Errcode,memebers[],DataSize)
-{
-    if(FailState != TQUERY_SUCCESS)
-    {
-        return ;
-    }
-    new clanid;
-
-    if(SQL_NumResults(Query) < 1) 
-    {
-        SQL_FreeHandle(Query)
-        return ;
-    } 
-    else 
-    {
-        // if there are results found
-        clanid  = SQL_ReadResult(Query, 0)
-        ____clan_cts_add_clan_in_json(Query)
-    }
-    
-    new count=0,szTemp[512]
-    for(new i=0;i<32;i++)
-    {
-        if (memebers[i]>0){
-            for(new j=1;j<33;j++){
-                if(____cts_db_users[j]==memebers[i]){
-                    if(is_user_connected(j)){
-                        ____cts_db_member_in_clan_of[j]=clanid
-                        break
-                    }
-                }
-            }
-            count++;
-        }
-    }
-    for (new i=0;i<count;i++){
-        format(szTemp,charsmax(szTemp),"INSERT INTO clan_members (user_id, clan_id) VALUES (%d, %d);",memebers[i],clanid)
-        SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle",szTemp)
-    }
-    SQL_FreeHandle(Query)
-    return ;
-}
-
-public _____clan_cts_IgnoreHandle_Edited(FailState,Handle:Query,Error[],Errcode,Data[],DataSize)
-{
-    new id
-    id = Data[0]
-    if(FailState != TQUERY_SUCCESS)
-    {
-        client_print_color(id, print_team_red, "%s ^3error ^1!!",CTS_CLAN_PREFIX)
-    }
-
-    SQL_FreeHandle(Query)
-    return ;
-}
-
-public _____clan_cts_IgnoreHandle(FailState,Handle:Query,Error[],Errcode,Data[],DataSize)
-{
-
-    SQL_FreeHandle(Query)
-    
-    return ;
-}
 
 /**
  * Adds a new player to the clan using their player ID.
@@ -336,7 +131,8 @@ public _____clan_cts_IgnoreHandle(FailState,Handle:Query,Error[],Errcode,Data[],
  * @param id               The ID of the clan leader or admin.
  * @param id_new_member    The ID of the player to be added.
  */
-stock clan_cts_add_member_in_clan(id,id_new_member){
+stock clan_cts_add_member(id,id_new_member)
+{
     new user_id_new=____cts_db_users[id_new_member],user_id=____cts_db_users[id]
     new member_of_clan=____cts_db_member_in_clan_of[id],member_of_clan_new=____cts_db_member_in_clan_of[id_new_member]
     if(user_id==0 || user_id_new==0 || member_of_clan==0 ){
@@ -347,6 +143,7 @@ stock clan_cts_add_member_in_clan(id,id_new_member){
     }
     new Data[1],szTemp[512]
     Data[0] = id
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"INSERT INTO clan_members (user_id, clan_id) VALUES ( '%d', '%d');",user_id_new, member_of_clan)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
     if(is_user_connected(id_new_member)){
@@ -363,7 +160,8 @@ stock clan_cts_add_member_in_clan(id,id_new_member){
  * @note this option for is add from request list and the player will add in next map after
  * use the function
  */
-stock clan_cts_add_member_in_clan_by_userid(id,userid_new_member){
+stock clan_cts_add_member_by_userid(id,userid_new_member)
+{
     new user_id=____cts_db_users[id]
     new member_of_clan=____cts_db_member_in_clan_of[id]
     if(user_id==0 || userid_new_member==0 || member_of_clan==0 ){
@@ -372,10 +170,10 @@ stock clan_cts_add_member_in_clan_by_userid(id,userid_new_member){
 
     new Data[1],szTemp[512]
     Data[0] = id
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"INSERT INTO clan_members (user_id, clan_id) VALUES ( '%d', '%d');",userid_new_member, member_of_clan)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
 }
-
 
 /**
  * Removes a member from the clan, must be called by the leader.
@@ -383,7 +181,8 @@ stock clan_cts_add_member_in_clan_by_userid(id,userid_new_member){
  * @param leader       The ID of the clan leader.
  * @param id_member    The ID of the member to be removed.
  */
-stock clan_cts_remove_member_from_clan(leader,id_member){
+stock clan_cts_remove_member_from_clan(leader,id_member)
+{
     new leader_of = ____cts_db_is_leader_of[leader],user_id=____cts_db_users[id_member]
     new member_of_clan=____cts_db_member_in_clan_of[id_member]
     if(leader_of==0 || user_id==0 || member_of_clan==0 ){
@@ -396,6 +195,7 @@ stock clan_cts_remove_member_from_clan(leader,id_member){
 
     new Data[1],szTemp[512]
     Data[0] = leader
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"delete from clan_members where user_id=%d and clan_id=%d;",user_id, member_of_clan)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
     ____cts_db_member_in_clan_of[id_member]=0
@@ -410,7 +210,8 @@ stock clan_cts_remove_member_from_clan(leader,id_member){
  *
  * @note callback will return callbackFunc(id,balance_coins)
  */
-stock clan_cts_donate_clan(id,coins,callbackFunc[]){
+stock clan_cts_donate_clan(id,coins,callbackFunc[])
+{
     new user_id = ____cts_db_users[id] , member_in_clan = ____cts_db_member_in_clan_of[id]
     if (user_id==0){
         return;
@@ -425,26 +226,10 @@ stock clan_cts_donate_clan(id,coins,callbackFunc[]){
     Data[0] = get_func_id(callbackFunc);
     Data[1] = id;
     Data[2] = coins;
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"insert into clan_donations (user_id,clan_id,amount) values (%d,%d,%d);",user_id,member_in_clan,coins)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_donate_callback",szTemp,Data,1)
 
-
-}
-
-public _____clan_cts_donate_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
-    new id=data[1]
-    if (FailState != TQUERY_SUCCESS) {
-        client_print_color(id, print_team_red, "%s ^3can't donate ^1!!",CTS_CLAN_PREFIX)
-        SQL_FreeHandle(Query);
-        return;
-    }
-    new balance=data[2]
-
-    callfunc_begin_i(data[0]);
-    callfunc_push_int(id);
-    callfunc_push_int(balance);
-    callfunc_end();
-    SQL_FreeHandle(Query);
 }
 
 /**
@@ -452,7 +237,8 @@ public _____clan_cts_donate_callback(FailState, Handle:Query, error[], errorCode
  *
  * @param id           The player's ID.
  */
-stock clan_cts_left_the_clan(id){
+stock clan_cts_left_the_clan(id)
+{
     new user_id = ____cts_db_users[id] , member_in_clan = ____cts_db_member_in_clan_of[id]
     if (user_id==0){
         return;
@@ -462,6 +248,7 @@ stock clan_cts_left_the_clan(id){
     }
     new Data[1],szTemp[512]
     Data[0] = id
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"delete from clan_members where user_id=%d and clan_id=%d;",user_id,member_in_clan)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
     ____cts_db_member_in_clan_of[id]=0
@@ -473,7 +260,8 @@ stock clan_cts_left_the_clan(id){
  *
  * @param id           The current leader's ID.
  */
-stock clan_cts_change_leader(id){
+stock clan_cts_change_leader(id)
+{
     new leader_of = ____cts_db_is_leader_of[id],user_id=____cts_db_users[id]
     new member_of_clan=____cts_db_member_in_clan_of[id]
     if(leader_of==0 || user_id==0 || member_of_clan==0 ){
@@ -484,6 +272,7 @@ stock clan_cts_change_leader(id){
     }
     new Data[1],szTemp[512]
     Data[0] = id
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"UPDATE clans SET leader_id = (SELECT user_id FROM ((SELECT user_id FROM clan_donations WHERE clan_id = %d GROUP BY user_id ORDER BY SUM(amount) DESC LIMIT 1) UNION (SELECT user_id FROM clan_members WHERE clan_id = %d ORDER BY joined_at ASC LIMIT 1)) AS new_leader LIMIT 1) WHERE id = %d;",member_of_clan,member_of_clan,member_of_clan)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
     ____cts_db_is_leader_of[id]=0
@@ -495,7 +284,8 @@ stock clan_cts_change_leader(id){
  * @param id           The current leader's ID.
  * @param new_id       The new leader's ID.
  */
-stock clan_cts_change_leader_by_he(id,new_id){
+stock clan_cts_change_leader_by_he(id,new_id)
+{
     new leader_of = ____cts_db_is_leader_of[id],user_id=____cts_db_users[id]
     new member_of_clan=____cts_db_member_in_clan_of[id]
     new new_member_of_clan=____cts_db_member_in_clan_of[new_id],new_user_id=____cts_db_users[new_id]
@@ -511,12 +301,12 @@ stock clan_cts_change_leader_by_he(id,new_id){
     }
     new Data[1],szTemp[512]
     Data[0] = id
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"UPDATE clans SET leader_id = %d WHERE id = %d;",new_user_id,member_of_clan)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
     ____cts_db_is_leader_of[id]=0
     ____cts_db_is_leader_of[new_id]=member_of_clan
 }
-
 
 /**
  * Changes the clan leader by member vote.
@@ -525,8 +315,8 @@ stock clan_cts_change_leader_by_he(id,new_id){
  * @param user_ids[]   Array of voting user IDs.
  * @param max_member   Maximum number of members (default is 10).
  */
-stock clan_cts_change_leader_by_vote(clan_id,user_ids[32],max_member=10){
-
+stock clan_cts_change_leader_by_vote(clan_id,user_ids[32],max_member=10)
+{
     new count=0,vote_table_of_user_ids[32]
     for(new i=0;i<max_member;i++)
     {
@@ -573,7 +363,7 @@ stock clan_cts_change_leader_by_vote(clan_id,user_ids[32],max_member=10){
         return;
     }
     new szTemp[512]
-
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"UPDATE clans SET leader_id = %d WHERE id = %d;",new_leader,clan_id)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp)
 
@@ -597,7 +387,8 @@ stock clan_cts_change_leader_by_vote(clan_id,user_ids[32],max_member=10){
  * @param id           The player's ID.
  * @param clan_id      The clan ID to join.
  */
-stock clan_cts_join_request(id,clan_id){
+stock clan_cts_join_request(id,clan_id)
+{
     new user_id = ____cts_db_users[id] , member_in_clan = ____cts_db_member_in_clan_of[id]
     if (user_id==0){
         return;
@@ -607,6 +398,7 @@ stock clan_cts_join_request(id,clan_id){
     }
     new Data[1],szTemp[512]
     Data[0] = id
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"insert into clan_invitations (user_id,clan_id) VALUES (%d,%d) ON DUPLICATE KEY UPDATE request_date = NOW();",user_id,clan_id)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
 
@@ -620,7 +412,8 @@ stock clan_cts_join_request(id,clan_id){
  *
  * @note callback will return callbackFunc(id,record_id,balance,clan_name[],date[])
  */
-stock clan_cts_check_coins_record(id,callbackFunc[]){
+stock clan_cts_check_coins_record(id,callbackFunc[])
+{
     new user_id = ____cts_db_users[id]
     if (user_id==0){
         return;
@@ -628,36 +421,9 @@ stock clan_cts_check_coins_record(id,callbackFunc[]){
     new Data[2],szTemp[512]
     Data[0] = get_func_id(callbackFunc);
     Data[1] = id;
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"SELECT * FROM coins_record WHERE user_id=%d;",user_id)
     SQL_ThreadQuery(____cts_g_SqlTuple,"____clan_cts_check_coins_record_callback",szTemp,Data,2)
-}
-
-public ____clan_cts_check_coins_record_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
-    new id=data[1]
-    if (FailState != TQUERY_SUCCESS) {
-        client_print_color(id, print_team_red, "%s ^3error ^1!!",CTS_CLAN_PREFIX)
-        SQL_FreeHandle(Query);
-        return;
-    }
-    new id_record,balance,clan_name[100],date[32]
-    while(SQL_MoreResults(Query))
-    {
-        id_record = SQL_ReadResult(Query,0)
-        balance = SQL_ReadResult(Query,3)
-        SQL_ReadResult(Query,2,clan_name,charsmax(clan_name))
-        SQL_ReadResult(Query,4,date,charsmax(clan_name))
-       
-        callfunc_begin_i(data[0]);
-        callfunc_push_int(id);
-        callfunc_push_int(id_record);
-        callfunc_push_int(balance);
-        callfunc_push_str(clan_name)
-        callfunc_push_str(date)
-        callfunc_end();
-    
-        SQL_NextRow(Query)
-    }
-    SQL_FreeHandle(Query);
 }
 
 /**
@@ -665,9 +431,10 @@ public ____clan_cts_check_coins_record_callback(FailState, Handle:Query, error[]
  *
  * @param id           The record id.
  */
-stock clan_cts_delete_coins_record(record_id){
+stock clan_cts_delete_coins_record(record_id)
+{
     new szTemp[512]
-
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"DELETE FROM coins_record WHERE id = %d;",record_id)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle",szTemp)
 }
@@ -686,10 +453,12 @@ stock clan_cts_delete_coins_record(record_id){
  * @param Members[]    Output array of member counts.
  * @param count        Output: number of clans returned.
  */
-stock clan_cts_top_clans_15(id,by=0,page=0,ids[15],names[15][100],image[15][150],prefix[15][10],upgrade_level[15],Members[15],count){
+stock clan_cts_top_clans_15(id,by=0,page=0,ids[15],names[15][100],image[15][150],prefix[15][10],upgrade_level[15],Members[15],&count)
+{
     new offset=page*15;
     new Handle:SqlConnection =SQL_Connect(____cts_g_SqlTuple);
     new Handle:Query;
+    // Here we will update the user hes information in the database where the steamid matches.
     if (by==0){
         Query = SQL_PrepareQuery(SqlConnection,"SELECT c.id,c.name,c.clan_logo_motd,c.clan_prefix,c.upgrade_level,COUNT(cm.user_id) as Members FROM clans c, clan_members cm where c.id=cm.clan_id GROUP BY c.id ORDER BY Members DESC LIMIT 15 OFFSET %d;",offset)
     }
@@ -734,7 +503,8 @@ stock clan_cts_top_clans_15(id,by=0,page=0,ids[15],names[15][100],image[15][150]
  *
  * @note callback will return callbackFunc(id,balance_coins)
  */
-stock clan_cts_get_bank(id,callbackFunc[]){
+stock clan_cts_get_bank(id,callbackFunc[])
+{
     new user_id = ____cts_db_users[id],member_in_clan = ____cts_db_member_in_clan_of[id]
     if (user_id==0){
         return;
@@ -745,138 +515,34 @@ stock clan_cts_get_bank(id,callbackFunc[]){
     new Data[2],szTemp[512]
     Data[0] = get_func_id(callbackFunc);
     Data[1] = id;
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"SELECT bank_balance FROM clans WHERE id=%d;",member_in_clan)
-    SQL_ThreadQuery(____cts_g_SqlTuple,"clan_cts_bank_callback",szTemp,Data,2)
-}
-
-public clan_cts_bank_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
-    new id=data[1]
-    if (FailState != TQUERY_SUCCESS) {
-        client_print_color(id, print_team_red, "%s ^3error ^1!!",CTS_CLAN_PREFIX)
-        SQL_FreeHandle(Query);
-        return;
-    }
-    new balance
-    if (SQL_NumResults(Query)>0)
-    {
-        balance = SQL_ReadResult(Query,0)
- 
-        callfunc_begin_i(data[0]);
-        callfunc_push_int(id);
-        callfunc_push_int(balance);
-        callfunc_end();
-    }
-    SQL_FreeHandle(Query);
+    SQL_ThreadQuery(____cts_g_SqlTuple,"___clan_cts_bank_callback",szTemp,Data,2)
 }
 
 /**
  * Loads all stored clan data.
  */
-stock clan_cts_clan_loads(){
+stock clan_cts_clan_loads()
+{
     new szTemp[512]
+    // Here we will update the user hes information in the database where the steamid matches.
     format(szTemp,charsmax(szTemp),"SELECT id,clan_prefix,clan_logo_motd,upgrade_level,DATEDIFF(last_payment+INTERVAL 14 DAY,now() ) AS daysleft,name FROM clans;")
     SQL_ThreadQuery(____cts_g_SqlTuple,"____clan_cts_clan_loads_callback",szTemp)
-}
-
-public ____clan_cts_clan_loads_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
-    if (FailState != TQUERY_SUCCESS) {
-        SQL_FreeHandle(Query);
-        return;
-    }
-    new id_clan, prefix[10], spryteprint[150], level, daysleft, name[100];
-    new id_str[10];
-
-    new JSON:jsono;
-
-    while(SQL_MoreResults(Query))
-    {
-        id_clan = SQL_ReadResult(Query, 0);
-        SQL_ReadResult(Query, 1, prefix, charsmax(prefix));
-
-        if (SQL_IsNull(Query, 2))
-            copy(spryteprint, charsmax(spryteprint), "");
-        else
-            SQL_ReadResult(Query, 2, spryteprint, charsmax(spryteprint));
-
-        level = SQL_ReadResult(Query, 3);
-        daysleft = SQL_ReadResult(Query, 4);
-        SQL_ReadResult(Query, 5, name, charsmax(name));
-
-        jsono = json_init_object()
-        json_object_set_number(jsono, "id", id_clan);
-        json_object_set_string(jsono, "prefix", prefix);
-        json_object_set_string(jsono, "spryteprint", spryteprint);
-        json_object_set_number(jsono, "level", level);
-        json_object_set_number(jsono, "daysleft", daysleft);
-        json_object_set_string(jsono, "name", name);
-
-        num_to_str(id_clan,id_str,charsmax(id_str));
-        json_object_set_value(____cts_clans, id_str, jsono);
-        json_free(jsono);
-
-        
-        SQL_NextRow(Query)
-    }
-    SQL_FreeHandle(Query);
-
-}
-
-public ____clan_cts_add_clan_in_json(Handle:Query) {
-
-    new id_clan, prefix[10], spryteprint[150], level, daysleft, name[100],leader_id;
-    new id_str[10];
-
-    new JSON:jsono;
-
-    if(SQL_NumResults(Query)>0)
-    {
-        id_clan = SQL_ReadResult(Query, 0);
-        SQL_ReadResult(Query, 1, prefix, charsmax(prefix));
-
-        if (SQL_IsNull(Query, 2))
-            copy(spryteprint, charsmax(spryteprint), "");
-        else
-            SQL_ReadResult(Query, 2, spryteprint, charsmax(spryteprint));
-
-        level = SQL_ReadResult(Query, 3);
-        daysleft = SQL_ReadResult(Query, 4);
-        SQL_ReadResult(Query, 5, name, charsmax(name));
-        leader_id = SQL_ReadResult(Query, 6);
-        jsono = json_init_object()
-        json_object_set_number(jsono, "id", id_clan);
-        json_object_set_string(jsono, "prefix", prefix);
-        json_object_set_string(jsono, "spryteprint", spryteprint);
-        json_object_set_number(jsono, "level", level);
-        json_object_set_number(jsono, "daysleft", daysleft);
-        json_object_set_string(jsono, "name", name);
-        num_to_str(id_clan,id_str,charsmax(id_str))
-        json_object_set_value(____cts_clans, id_str, jsono);
-        json_free(jsono);
-        for(new i=1;i<33;i++){
-            if(leader_id==____cts_db_users[i]){
-                ____cts_db_is_leader_of[i]=id_clan
-                ____cts_db_member_in_clan_of[i]=id_clan
-                client_print_color(0, print_team_blue, "%s ^4%s^1 has create ^3clan ^4%s ^1!!",CTS_CLAN_PREFIX,____cts_db_names[i],name)
-                break
-            }
-        }
-
-    }
-
 }
 
 /**
  * Retrieves detailed information about the player's clan.
  *
- * @param id           The player's ID.
+ * @param id           Clan's ID.
  * @param prefix[]     Output: clan prefix.
  * @param spryteprint[] Output: clan logo/image URL.
  * @param level        Output: clan level.
  * @param daysleft     Output: remaining subscription days.
  * @param name[]       Output: clan name.
  */
-stock clan_cts_get_clan_info(id,prefix[10], spryteprint[150], level, daysleft, name[100]){
-
+stock clan_cts_get_clan_info(id,prefix[10], spryteprint[150], &level, &daysleft, name[100])
+{
     if (id==0){
         return false;
     }
@@ -886,6 +552,7 @@ stock clan_cts_get_clan_info(id,prefix[10], spryteprint[150], level, daysleft, n
     if (object==Invalid_JSON ){
         return false;
     }
+    // Here we will update the user hes information in the database where the steamid matches.
     json_object_get_string(object,"prefix",prefix,charsmax(prefix))
     json_object_get_string(object,"spryteprint",spryteprint,charsmax(spryteprint))
     level=json_object_get_number(object,"level")
@@ -907,7 +574,8 @@ stock clan_cts_get_clan_info(id,prefix[10], spryteprint[150], level, daysleft, n
  * @param total_donations[] Output: total donations per user.
  * @param count        Output: number of results returned.
  */
-stock clan_cts_top_donators_15(id,page=0,user_ids[15],user_names[15][32],steam_ids[15][32],total_donations[15],count){
+stock clan_cts_top_donators_15(id,page=0,user_ids[15],user_names[15][32],steam_ids[15][32],total_donations[15],&count)
+{
     new user_id = ____cts_db_users[id],member_in_clan = ____cts_db_member_in_clan_of[id]
     if (user_id==0){
         return;
@@ -955,7 +623,8 @@ stock clan_cts_top_donators_15(id,page=0,user_ids[15],user_names[15][32],steam_i
  * @param dates[][]    Output: date of request.
  * @param count        Output: number of requests returned.
  */
-stock clan_cts_show_requests_15(id,page=0,user_ids[15],user_names[15][32],steam_ids[15][32],dates[15][32],count=0){
+stock clan_cts_show_requests_15(id,page=0,user_ids[15],user_names[15][32],steam_ids[15][32],dates[15][32],&count=0)
+{
     new user_id = ____cts_db_users[id],member_in_clan = ____cts_db_member_in_clan_of[id]
     if (user_id==0){
         return;
@@ -999,10 +668,12 @@ stock clan_cts_show_requests_15(id,page=0,user_ids[15],user_names[15][32],steam_
  * @param user_ids[]   Output: user IDs.
  * @param num          Output: total number found.
  */
-stock clan_cts_get_online_members_no_clan(players[32],user_ids[32],num){
+stock clan_cts_get_online_members_no_clan(players[32],user_ids[32],&num)
+{
+    // Here we will update the user hes information in the database where the steamid matches.
     num=0;
     for (new i=1;i<33;i++){
-        if ((____cts_db_users[i]!=0) &&(____cts_db_member_in_clan_of[i]==0) && is_user_connected(i)){
+        if ((____cts_db_users[i]!=0) &&(____cts_db_member_in_clan_of[i]==0) && (is_user_connected(i))){
             players[num]=i;
             user_ids[num]=____cts_db_users[i];
             num++;
@@ -1018,9 +689,14 @@ stock clan_cts_get_online_members_no_clan(players[32],user_ids[32],num){
  * @param user_ids[]   Output: user IDs.
  * @param num          Output: total number found.
  */
-stock clan_cts_get_online_members_owr_clan(id,players[32],user_ids[32],num){
+stock clan_cts_get_online_members_owr_clan(id,players[32],user_ids[32],&num)
+{
     new clanid=____cts_db_member_in_clan_of[id]
     num=0;
+    if(clanid==0){
+        return ;
+    }
+    // Here we will update the user hes information in the database where the steamid matches.
     for (new i=1;i<33;i++){
         if ((____cts_db_users[i]!=0) &&(____cts_db_member_in_clan_of[i]==clanid) && is_user_connected(i)){
             players[num]=i;
@@ -1030,14 +706,15 @@ stock clan_cts_get_online_members_owr_clan(id,players[32],user_ids[32],num){
     }
 }
 
-
 /**
  * Gets internal user ID from player ID.
  *
  * @param id           The player's ID.
  * @return             The user ID.
  */
-stock clan_cts_get_player_userid(id){
+stock clan_cts_get_player_userid(id)
+{
+    // Here we will update the user hes information in the database where the steamid matches.
     return ____cts_db_users[id]
 }
 
@@ -1047,7 +724,9 @@ stock clan_cts_get_player_userid(id){
  * @param id           The player's ID.
  * @return             The clan ID.
  */
-stock clan_cts_get_player_clanid(id){
+stock clan_cts_get_player_clanid(id)
+{
+    // Here we will update the user hes information in the database where the steamid matches.
     return ____cts_db_member_in_clan_of[id]
 }
 
@@ -1057,7 +736,9 @@ stock clan_cts_get_player_clanid(id){
  * @param id           The player's ID.
  * @param Output[32]      output string save player's name.
  */
-stock clan_cts_get_player_name(id,Output[32]){
+stock clan_cts_get_player_name(id,Output[32])
+{
+    // Here we will update the user hes information in the database where the steamid matches.
     copy(Output,31,____cts_db_names[id])
 }
 
@@ -1067,17 +748,19 @@ stock clan_cts_get_player_name(id,Output[32]){
  * @param id           The player's ID.
  * @param Output[32]   output string save player's Steam ID.
  */
-stock clan_cts_get_player_steamid(id,Output[32]){
+stock clan_cts_get_player_steamid(id,Output[32])
+{
+    // Here we will update the user hes information in the database where the steamid matches.
     copy(Output,31,____cts_db_steams[id])
 }
-
 
 /**
  * Upgrades the clan's level or features.
  *
  * @param leader       The clan leader's ID.
  */
-stock clan_cts_upgrade_clan(leader){
+stock clan_cts_upgrade_clan(leader)
+{
     new leader_of = ____cts_db_is_leader_of[leader],user_id=____cts_db_users[leader]
     new member_of_clan=____cts_db_member_in_clan_of[leader]
     if(leader_of==0 || user_id==0 || member_of_clan==0 ){
@@ -1087,13 +770,12 @@ stock clan_cts_upgrade_clan(leader){
         return ;
     }
 
-
+    // Here we will update the user hes information in the database where the steamid matches.
     new Data[1],szTemp[512]
     Data[0] = leader
     format(szTemp,charsmax(szTemp),"UPDATE clans SET bank_balance = bank_balance - CASE WHEN upgrade_level = 0 THEN 300 WHEN upgrade_level = 1 THEN 500 ELSE 0 END,upgrade_level = upgrade_level + 1,last_payment = NOW() WHERE id = %d and upgrade_level < 2 AND ((upgrade_level = 0 and bank_balance>=300) or (upgrade_level = 1 and bank_balance>=500))", member_of_clan)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle_Edited",szTemp,Data,1)
 }
-
 
 /**
  * Logs out the player from the clan system.
@@ -1102,6 +784,7 @@ stock clan_cts_upgrade_clan(leader){
  */
 stock clan_cts_player_logout(id)
 {
+    // Here we will update the user hes information in the database where the steamid matches.
     ____cts_db_users[id]=0
     ____cts_db_member_in_clan_of[id]=0
     ____cts_db_is_leader_of[id]=0
@@ -1109,3 +792,364 @@ stock clan_cts_player_logout(id)
     copy(____cts_db_steams[id],31,"")
 }
 
+
+stock clan_cts_clean_names(name[],len){
+    replace_all(name,len,"(1)","")
+    replace_all(name,len,"(2)","")
+    replace_all(name,len,"(3)","")
+    replace_all(name,len,"(4)","")
+    replace_all(name,len,"(5)","")
+    replace_all(name,len,"(6)","")
+    replace_all(name,len,"(7)","")
+    replace_all(name,len,"(8)","")
+    replace_all(name,len,"(9)","")
+    replace_all(name,len,"(10)","")
+    replace_all(name,len,"(","")
+    replace_all(name,len,")","")
+    replace_all(name,len," ","_")
+}
+
+
+public ____clan_cts_add_clan_in_json(Handle:Query) {
+
+    new id_clan, prefix[10], spryteprint[150], level, daysleft, name[100],leader_id;
+    new id_str[10];
+
+    new JSON:jsono;
+
+    if(SQL_NumResults(Query)>0)
+    {
+        id_clan = SQL_ReadResult(Query, 0);
+        SQL_ReadResult(Query, 1, prefix, charsmax(prefix));
+
+        if (SQL_IsNull(Query, 2))
+            copy(spryteprint, charsmax(spryteprint), "");
+        else
+            SQL_ReadResult(Query, 2, spryteprint, charsmax(spryteprint));
+
+        level = SQL_ReadResult(Query, 3);
+        daysleft = SQL_ReadResult(Query, 4);
+        SQL_ReadResult(Query, 5, name, charsmax(name));
+        leader_id = SQL_ReadResult(Query, 6);
+        jsono = json_init_object()
+        json_object_set_number(jsono, "id", id_clan);
+        json_object_set_string(jsono, "prefix", prefix);
+        json_object_set_string(jsono, "spryteprint", spryteprint);
+        json_object_set_number(jsono, "level", level);
+        json_object_set_number(jsono, "daysleft", daysleft);
+        json_object_set_string(jsono, "name", name);
+        num_to_str(id_clan,id_str,charsmax(id_str))
+        json_object_set_value(____cts_clans, id_str, jsono);
+        json_free(jsono);
+        for(new i=1;i<33;i++){
+            if(leader_id==____cts_db_users[i]){
+                ____cts_db_is_leader_of[i]=id_clan
+                ____cts_db_member_in_clan_of[i]=id_clan
+                client_print_color(0, print_team_blue, "%s ^4%s^1 has create ^3clan ^4%s ^1!!",CTS_CLAN_PREFIX,____cts_db_names[i],name)
+                break
+            }
+        }
+
+    }
+
+}
+
+
+public _____clan_cts_IgnoreHandle_Edited(FailState,Handle:Query,Error[],Errcode,Data[],DataSize){
+    new id
+    id = Data[0]
+    if(FailState != TQUERY_SUCCESS)
+    {
+        client_print_color(id, print_team_red, "%s ^3error ^1!!",CTS_CLAN_PREFIX)
+    }
+
+    SQL_FreeHandle(Query)
+    return ;
+}
+
+
+public _____clan_cts_IgnoreHandle(FailState,Handle:Query,Error[],Errcode,Data[],DataSize){
+
+    SQL_FreeHandle(Query)
+    
+    return ;
+}
+
+
+public _____clan_cts_donate_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
+    new id=data[1]
+    if (FailState != TQUERY_SUCCESS) {
+        client_print_color(id, print_team_red, "%s ^3can't donate ^1!!",CTS_CLAN_PREFIX)
+        SQL_FreeHandle(Query);
+        return;
+    }
+    new balance=data[2]
+
+    callfunc_begin_i(data[0]);
+    callfunc_push_int(id);
+    callfunc_push_int(balance);
+    callfunc_end();
+    SQL_FreeHandle(Query);
+}
+
+public _____clan_cts_register_members(FailState,Handle:Query,Error[],Errcode,memebers[],DataSize){
+    if(FailState != TQUERY_SUCCESS)
+    {
+        return ;
+    }
+    new clanid;
+
+    if(SQL_NumResults(Query) < 1) 
+    {
+        SQL_FreeHandle(Query)
+        return ;
+    } 
+    else 
+    {
+
+        clanid  = SQL_ReadResult(Query, 0)
+        ____clan_cts_add_clan_in_json(Query)
+    }
+    
+    new count=0,szTemp[512]
+    for(new i=0;i<32;i++)
+    {
+        if (memebers[i]>0){
+            for(new j=1;j<33;j++){
+                if(____cts_db_users[j]==memebers[i]){
+                    if(is_user_connected(j)){
+                        ____cts_db_member_in_clan_of[j]=clanid
+                        break
+                    }
+                }
+            }
+            count++;
+        }
+    }
+    for (new i=0;i<count;i++){
+        format(szTemp,charsmax(szTemp),"INSERT INTO clan_members (user_id, clan_id) VALUES (%d, %d);",memebers[i],clanid)
+        SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle",szTemp)
+    }
+    SQL_FreeHandle(Query)
+    return ;
+}
+
+public ______clan_cts_register_client2(FailState,Handle:Query,Error[],Errcode,Data[],DataSize){
+    if(FailState != TQUERY_SUCCESS)
+    {
+        SQL_FreeHandle(Query)
+        return ;
+    }
+
+    new id
+    id = Data[0]
+    
+    if(SQL_NumResults(Query) < 1) 
+    {
+
+        new szSteamId[32],szNamess[32]
+        get_user_authid(id, szSteamId, charsmax(szSteamId))
+        get_user_name(id, szNamess, charsmax(szNamess))
+        clan_cts_clean_names(szNamess,charsmax(szNamess))
+
+        if (equal(szSteamId,"ID_PENDING")){
+            SQL_FreeHandle(Query)
+            return ;
+        }
+            
+        new szTemp[512]
+        
+        format(szTemp,charsmax(szTemp),"INSERT INTO users ( steam_id , user_name)VALUES ('%s','%s');",szSteamId,szNamess)
+        SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle",szTemp)
+    } 
+    else 
+    {
+        ____cts_db_users[id]  = SQL_ReadResult(Query, 0)
+        SQL_ReadResult(Query, 1,____cts_db_names[id],31)
+        SQL_ReadResult(Query, 2,____cts_db_steams[id],31)
+        if(SQL_IsNull(Query,3)){
+            ____cts_db_member_in_clan_of[id]=0
+        }
+        else{
+            ____cts_db_member_in_clan_of[id]=SQL_ReadResult(Query, 3)
+        }
+        if(SQL_IsNull(Query,4)){
+            ____cts_db_is_leader_of[id]=0
+        }
+        else{
+            ____cts_db_is_leader_of[id]=SQL_ReadResult(Query, 4)
+        }
+    }
+    SQL_FreeHandle(Query)
+    return ;
+}
+
+
+public ______clan_cts_register_client(FailState,Handle:Query,Error[],Errcode,Data[],DataSize){
+
+    new id
+    id = Data[0]
+    if(FailState != TQUERY_SUCCESS)
+    {
+        SQL_FreeHandle(Query)
+        return ;
+    }
+
+    
+    if(SQL_NumResults(Query) < 1) 
+    {
+        new szSteamId[32],szNamess[32]
+        get_user_authid(id, szSteamId, charsmax(szSteamId))
+        get_user_name(id, szNamess, charsmax(szNamess))
+        clan_cts_clean_names(szNamess,charsmax(szNamess))
+        if (equal(szSteamId,"ID_PENDING")){
+            SQL_FreeHandle(Query)
+            return ;
+        }
+            
+        new szTemp[512]
+        
+        format(szTemp,charsmax(szTemp),"INSERT INTO users ( steam_id , user_name)VALUES ('%s','%s');",szSteamId,szNamess)
+        SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_IgnoreHandle",szTemp)
+        __clan_cts_load_player_data2(id)
+    } 
+    else 
+    {
+        ____cts_db_users[id]  = SQL_ReadResult(Query, 0)
+        SQL_ReadResult(Query, 1,____cts_db_names[id],31)
+        SQL_ReadResult(Query, 2,____cts_db_steams[id],31)
+        if(SQL_IsNull(Query,3)){
+            ____cts_db_member_in_clan_of[id]=0
+        }
+        else{
+            ____cts_db_member_in_clan_of[id]=SQL_ReadResult(Query, 3)
+        }
+        if(SQL_IsNull(Query,4)){
+            ____cts_db_is_leader_of[id]=0
+        }
+        else{
+            ____cts_db_is_leader_of[id]=SQL_ReadResult(Query, 4)
+        }
+    }
+    SQL_FreeHandle(Query)
+    return ;
+}
+
+public __clan_cts_load_player_data2(id){
+    new szSteamId[32],szNamess[32], szTemp[512]
+    get_user_authid(id, szSteamId, charsmax(szSteamId))
+    get_user_name(id, szNamess, charsmax(szNamess))
+
+    clan_cts_clean_names(szNamess,charsmax(szNamess))
+    new Data[1]
+    Data[0] = id
+    
+    format(szTemp,charsmax(szTemp),"SELECT u.user_id, u.user_name, u.steam_id, cm.clan_id AS member_clan_id, c.id AS leader_clan_id FROM users u LEFT JOIN clan_members cm ON u.user_id = cm.user_id LEFT JOIN clans c ON u.user_id = c.leader_id WHERE u.user_name = '%s' AND u.steam_id = '%s';", szNamess,szSteamId)
+    SQL_ThreadQuery(____cts_g_SqlTuple,"______clan_cts_register_client2",szTemp,Data,1)
+}
+
+
+public ____clan_cts_check_coins_record_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
+    new id=data[1]
+    if (FailState != TQUERY_SUCCESS) {
+        client_print_color(id, print_team_red, "%s ^3error ^1!!",CTS_CLAN_PREFIX)
+        SQL_FreeHandle(Query);
+        return;
+    }
+    new id_record,balance,clan_name[100],date[32]
+    while(SQL_MoreResults(Query))
+    {
+        id_record = SQL_ReadResult(Query,0)
+        balance = SQL_ReadResult(Query,3)
+        SQL_ReadResult(Query,2,clan_name,charsmax(clan_name))
+        SQL_ReadResult(Query,4,date,charsmax(clan_name))
+       
+        callfunc_begin_i(data[0]);
+        callfunc_push_int(id);
+        callfunc_push_int(id_record);
+        callfunc_push_int(balance);
+        callfunc_push_str(clan_name)
+        callfunc_push_str(date)
+        callfunc_end();
+    
+        SQL_NextRow(Query)
+    }
+    SQL_FreeHandle(Query);
+}
+
+public ___clan_cts_bank_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
+    new id=data[1]
+    if (FailState != TQUERY_SUCCESS) {
+        client_print_color(id, print_team_red, "%s ^3error ^1!!",CTS_CLAN_PREFIX)
+        SQL_FreeHandle(Query);
+        return;
+    }
+    new balance
+    if (SQL_NumResults(Query)>0)
+    {
+        balance = SQL_ReadResult(Query,0)
+ 
+        callfunc_begin_i(data[0]);
+        callfunc_push_int(id);
+        callfunc_push_int(balance);
+        callfunc_end();
+    }
+    SQL_FreeHandle(Query);
+}
+
+public ____clan_cts_clan_loads_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
+    if (FailState != TQUERY_SUCCESS) {
+        SQL_FreeHandle(Query);
+        return;
+    }
+    new id_clan, prefix[10], spryteprint[150], level, daysleft, name[100];
+    new id_str[10];
+
+    new JSON:jsono;
+
+    while(SQL_MoreResults(Query))
+    {
+        id_clan = SQL_ReadResult(Query, 0);
+        SQL_ReadResult(Query, 1, prefix, charsmax(prefix));
+
+        if (SQL_IsNull(Query, 2))
+            copy(spryteprint, charsmax(spryteprint), "");
+        else
+            SQL_ReadResult(Query, 2, spryteprint, charsmax(spryteprint));
+
+        level = SQL_ReadResult(Query, 3);
+        daysleft = SQL_ReadResult(Query, 4);
+        SQL_ReadResult(Query, 5, name, charsmax(name));
+
+        jsono = json_init_object()
+        json_object_set_number(jsono, "id", id_clan);
+        json_object_set_string(jsono, "prefix", prefix);
+        json_object_set_string(jsono, "spryteprint", spryteprint);
+        json_object_set_number(jsono, "level", level);
+        json_object_set_number(jsono, "daysleft", daysleft);
+        json_object_set_string(jsono, "name", name);
+
+        num_to_str(id_clan,id_str,charsmax(id_str));
+        json_object_set_value(____cts_clans, id_str, jsono);
+        json_free(jsono);
+
+        
+        SQL_NextRow(Query)
+    }
+    SQL_FreeHandle(Query);
+
+}
+
+public _____clan_cts_create_clan_callback(FailState, Handle:Query, error[], errorCode, data[], dataSize) {
+    new id=data[1]
+    if (FailState != TQUERY_SUCCESS) {
+        client_print_color(id, print_team_red, "%s ^3can't create clan ^1!!",CTS_CLAN_PREFIX)
+        SQL_FreeHandle(Query);
+        return;
+    }
+
+    callfunc_begin_i(data[0]);
+    callfunc_push_int(id);
+    callfunc_end();
+    SQL_FreeHandle(Query);
+}
