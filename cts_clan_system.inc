@@ -9,7 +9,7 @@
 #include <json>
 
 
-#define CTS_VERSION "0.2_beta"
+#define CTS_VERSION "beta-1.0"
 #define CTS_AUTHOR "CT Spawn"
 #define CTS_CLAN_HOMEURL "https://github.com/kira-xc/amx_clan_system"
 
@@ -236,7 +236,7 @@ stock clan_cts_donate_clan(id,coins,callbackFunc[])
     Data[2] = coins;
     
     format(szTemp,charsmax(szTemp),"insert into clan_donations (user_id,clan_id,amount) values (%d,%d,%d);",user_id,member_in_clan,coins)
-    SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_donate_callback",szTemp,Data,1)
+    SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_donate_callback",szTemp,Data,3)
 
 }
 
