@@ -121,7 +121,7 @@ stock clan_cts_create_clan(id,prefix[],clan_name[],memebers[32],max_member=0,cal
         return;
     }
     new szTemp[512]
-    format(szTemp,charsmax(szTemp),"SELECT id,clan_prefix,clan_logo_motd,upgrade_level,DATEDIFF(last_payment+INTERVAL 14 DAY,now() ) AS daysleft,name,leader_id FROM clans where name = '%s';",clan_name)
+    format(szTemp,charsmax(szTemp),"SELECT id,clan_prefix,clan_logo,upgrade_level,DATEDIFF(last_payment+INTERVAL 14 DAY,now() ) AS daysleft,name,leader_id FROM clans where name = '%s';",clan_name)
     SQL_ThreadQuery(____cts_g_SqlTuple,"_____clan_cts_register_members",szTemp,memebers,32)
 
     callfunc_begin_i(get_func_id(callbackFunc));
