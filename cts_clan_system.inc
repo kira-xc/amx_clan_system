@@ -9,7 +9,7 @@
 #include <json>
 
 
-#define CTS_VERSION "beta-1.0"
+#define CTS_VERSION "beta-1.0.1"
 #define CTS_AUTHOR "CT Spawn"
 #define CTS_CLAN_HOMEURL "https://github.com/kira-xc/amx_clan_system"
 
@@ -556,7 +556,7 @@ stock clan_cts_clan_loads()
 {
     new szTemp[512]
     
-    format(szTemp,charsmax(szTemp),"SELECT id,clan_prefix,clan_logo_motd,upgrade_level,DATEDIFF(last_payment+INTERVAL 14 DAY,now() ) AS daysleft,name FROM clans;")
+    format(szTemp,charsmax(szTemp),"SELECT id,clan_prefix,clan_logo,upgrade_level,DATEDIFF(last_payment+INTERVAL 14 DAY,now() ) AS daysleft,name FROM clans;")
     SQL_ThreadQuery(____cts_g_SqlTuple,"____clan_cts_clan_loads_callback",szTemp)
 }
 
