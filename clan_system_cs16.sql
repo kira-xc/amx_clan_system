@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `clan_system_cs16`
+-- Database: `defaultdb`
 --
 
 -- --------------------------------------------------------
@@ -263,7 +263,7 @@ CREATE TABLE `users` (
 --
 DROP TABLE IF EXISTS `clan_donations_temp`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `clan_donations_temp`  AS SELECT `clan_donations`.`user_id` AS `user_id`, `clan_donations`.`clan_id` AS `clan_id`, sum(`clan_donations`.`amount`) AS `total_donations` FROM `clan_donations` WHERE `clan_donations`.`donated_at` >= current_timestamp() - interval 14 day GROUP BY `clan_donations`.`user_id`, `clan_donations`.`clan_id` ;
+CREATE VIEW `clan_donations_temp`  AS SELECT `clan_donations`.`user_id` AS `user_id`, `clan_donations`.`clan_id` AS `clan_id`, sum(`clan_donations`.`amount`) AS `total_donations` FROM `clan_donations` WHERE `clan_donations`.`donated_at` >= current_timestamp() - interval 14 day GROUP BY `clan_donations`.`user_id`, `clan_donations`.`clan_id` ;
 
 -- --------------------------------------------------------
 
@@ -272,7 +272,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `inactive_clans`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `inactive_clans`  AS SELECT `clans`.`id` AS `id`, `clans`.`name` AS `name`, `clans`.`clan_prefix` AS `clan_prefix`, `clans`.`clan_logo` AS `clan_logo`, `clans`.`clan_logo_motd` AS `clan_logo_motd`, `clans`.`leader_id` AS `leader_id`, `clans`.`bank_balance` AS `bank_balance`, `clans`.`upgrade_level` AS `upgrade_level`, `clans`.`last_payment` AS `last_payment`, `clans`.`created_at` AS `created_at` FROM `clans` WHERE `clans`.`last_payment` <= current_timestamp() - interval 14 day ;
+CREATE VIEW `inactive_clans`  AS SELECT `clans`.`id` AS `id`, `clans`.`name` AS `name`, `clans`.`clan_prefix` AS `clan_prefix`, `clans`.`clan_logo` AS `clan_logo`, `clans`.`clan_logo_motd` AS `clan_logo_motd`, `clans`.`leader_id` AS `leader_id`, `clans`.`bank_balance` AS `bank_balance`, `clans`.`upgrade_level` AS `upgrade_level`, `clans`.`last_payment` AS `last_payment`, `clans`.`created_at` AS `created_at` FROM `clans` WHERE `clans`.`last_payment` <= current_timestamp() - interval 14 day ;
 
 --
 -- Indexes for dumped tables
@@ -332,31 +332,31 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `clans`
 --
 ALTER TABLE `clans`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `clan_donations`
 --
 ALTER TABLE `clan_donations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `clan_invitations`
 --
 ALTER TABLE `clan_invitations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `coins_record`
 --
 ALTER TABLE `coins_record`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
@@ -399,7 +399,7 @@ DELIMITER $$
 --
 -- Events
 --
-CREATE DEFINER=`root`@`localhost` EVENT `delete inctive clan` ON SCHEDULE EVERY 1 MINUTE STARTS '2025-04-11 17:49:44' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
+CREATE EVENT `delete inctive clan` ON SCHEDULE EVERY 1 MINUTE STARTS '2025-04-11 17:49:44' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
 DELETE from clans where upgrade_level=0 and bank_balance<300 and id in (SELECT id from inactive_clans);
 
 UPDATE clans 
